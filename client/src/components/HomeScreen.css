@@ -116,6 +116,15 @@
   box-shadow: 0 12px 40px rgba(108, 99, 255, 0.3);
 }
 
+.mode-btn-solo {
+  border-color: rgba(255, 209, 102, 0.4);
+}
+
+.mode-btn-solo:hover {
+  border-color: var(--warning);
+  background: rgba(255, 209, 102, 0.1);
+}
+
 .mode-btn-create {
   border-color: rgba(108, 99, 255, 0.4);
 }
@@ -265,6 +274,16 @@
 .submit-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.submit-btn-solo {
+  background: linear-gradient(135deg, #ffd166, #ffb830);
+  color: #1a1529;
+  box-shadow: 0 4px 20px rgba(255, 209, 102, 0.4);
+}
+
+.submit-btn-solo:hover:not(:disabled) {
+  box-shadow: 0 8px 30px rgba(255, 209, 102, 0.5);
 }
 
 .submit-btn-join {

@@ -5,7 +5,7 @@ import './LobbyScreen.css';
 
 export default function LobbyScreen() {
   const { state, dispatch } = useGame();
-  const { startGame } = useSocket();
+  const { startGame, disconnectSocket } = useSocket();
   const [copied, setCopied] = useState(false);
 
   const { room, roomCode, isHost, playerName } = state;
@@ -19,7 +19,7 @@ export default function LobbyScreen() {
   };
 
   const handleLeave = () => {
-    if (state.socket) state.socket.disconnect();
+    disconnectSocket();
     dispatch({ type: 'RESET' });
   };
 
@@ -135,14 +135,21 @@ export default function LobbyScreen() {
             </div>
 
             {isHost ? (
-              <button
-                className="start-btn"
-                onClick={startGame}
-                disabled={room.players.length < 1}
-              >
-                <span>🚀</span>
-                O'yinni boshlash
-              </button>
+              <div className="start-section">
+                {room.players.length === 1 && (
+                  <div className="solo-notice">
+                    <span>🎯</span>
+                    <span>Solo rejim — o'zingiz o'ynaysiz</span>
+                  </div>
+                )}
+                <button
+                  className="start-btn"
+                  onClick={startGame}
+                >
+                  <span>{room.players.length === 1 ? '🎯' : '🚀'}</span>
+                  {room.players.length === 1 ? 'Solo boshlash' : 'O\'yinni boshlash'}
+                </button>
+              </div>
             ) : (
               <div className="waiting-start">
                 <div className="waiting-spinner" />

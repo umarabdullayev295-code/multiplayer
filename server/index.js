@@ -42,7 +42,7 @@ const questionTimers = new Map();
 io.on('connection', (socket) => {
   console.log(`Yangi ulanish: ${socket.id}`);
 
-  socket.on('create_room', ({ playerName, settings }) => {
+  socket.on('create_room', ({ playerName, settings, isSolo }) => {
     if (!playerName || playerName.trim().length < 2) {
       return socket.emit('error', { message: 'Ism kamida 2 ta harf bo\'lishi kerak' });
     }
@@ -53,10 +53,11 @@ io.on('connection', (socket) => {
 
     socket.emit('room_created', {
       roomCode: room.id,
-      room: sanitizeRoom(room)
+      room: sanitizeRoom(room),
+      isSolo: !!isSolo
     });
 
-    console.log(`Xona yaratildi: ${room.id} (${playerName})`);
+    console.log(`Xona yaratildi: ${room.id} (${playerName})${isSolo ? ' [Solo]' : ''}`);
   });
 
   socket.on('join_room', ({ roomCode, playerName }) => {

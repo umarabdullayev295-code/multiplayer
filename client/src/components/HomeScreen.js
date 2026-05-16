@@ -4,11 +4,11 @@ import { useGame } from '../context/GameContext';
 import './HomeScreen.css';
 
 export default function HomeScreen() {
-  const [mode, setMode] = useState(null); // 'create' | 'join'
+  const [mode, setMode] = useState(null); // 'solo' | 'create' | 'join'
   const [playerName, setPlayerName] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const [settings, setSettings] = useState({ questionCount: 10, maxPlayers: 8 });
-  const { createRoom, joinRoom } = useSocket();
+  const { createRoom, joinRoom, startGame } = useSocket();
   const { state } = useGame();
 
   const handleCreate = (e) => {
@@ -54,13 +54,23 @@ export default function HomeScreen() {
         {!mode ? (
           <div className="mode-selector">
             <button
+              className="mode-btn mode-btn-solo"
+              onClick={() => setMode('solo')}
+            >
+              <span className="mode-btn-icon">🎯</span>
+              <span className="mode-btn-text">
+                <strong>Solo o'ynash</strong>
+                <small>Bir o'zingiz bilimingizni sinang</small>
+              </span>
+            </button>
+            <button
               className="mode-btn mode-btn-create"
               onClick={() => setMode('create')}
             >
               <span className="mode-btn-icon">🎮</span>
               <span className="mode-btn-text">
                 <strong>Xona yaratish</strong>
-                <small>O'yinni boshlash va do'stlarni taklif qilish</small>
+                <small>Do'stlarni taklif qilib birga o'ynash</small>
               </span>
             </button>
             <button
@@ -73,6 +83,44 @@ export default function HomeScreen() {
                 <small>Mavjud o'yinga qo'shilish</small>
               </span>
             </button>
+          </div>
+        ) : mode === 'solo' ? (
+          <div className="form-card animate-in">
+            <button className="back-btn" onClick={() => setMode(null)}>← Orqaga</button>
+            <h2>🎯 Solo o'ynash</h2>
+              <form onSubmit={(e) => { e.preventDefault(); if (playerName.trim().length >= 2) createRoom(playerName.trim(), settings, true); }}>
+              <div className="form-group">
+                <label>Ismingiz</label>
+                <input
+                  type="text"
+                  placeholder="Ismingizni kiriting..."
+                  value={playerName}
+                  onChange={e => setPlayerName(e.target.value)}
+                  maxLength={20}
+                  className="form-input"
+                  autoFocus
+                />
+              </div>
+              <div className="form-group">
+                <label>Savollar soni</label>
+                <select
+                  value={settings.questionCount}
+                  onChange={e => setSettings(s => ({ ...s, questionCount: +e.target.value }))}
+                  className="form-select"
+                >
+                  <option value={5}>5 ta (tez)</option>
+                  <option value={10}>10 ta (o'rtacha)</option>
+                  <option value={15}>15 ta (to'liq)</option>
+                </select>
+              </div>
+              <button
+                type="submit"
+                className="submit-btn submit-btn-solo"
+                disabled={playerName.trim().length < 2 || !state.isConnected}
+              >
+                {state.isConnected ? '🎯 Boshlash' : 'Ulanmoqda...'}
+              </button>
+            </form>
           </div>
         ) : mode === 'create' ? (
           <div className="form-card animate-in">

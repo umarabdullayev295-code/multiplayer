@@ -1,5 +1,6 @@
 import React from 'react';
 import { useGame } from '../context/GameContext';
+import { useSocket } from '../hooks/useSocket';
 import './ResultsScreen.css';
 
 const MEDALS = ['🥇', '🥈', '🥉'];
@@ -12,8 +13,10 @@ export default function ResultsScreen() {
   const myResult = leaderboard.find(p => p.id === playerId || p.name === playerName);
   const myRank = myResult?.rank || leaderboard.length;
 
+  const { disconnectSocket } = useSocket();
+
   const handlePlayAgain = () => {
-    if (state.socket) state.socket.disconnect();
+    disconnectSocket();
     dispatch({ type: 'RESET' });
   };
 

@@ -304,6 +304,25 @@
   color: var(--text-primary);
 }
 
+.start-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.solo-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 209, 102, 0.12);
+  border: 1px solid rgba(255, 209, 102, 0.3);
+  color: var(--warning);
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .start-btn {
   width: 100%;
   padding: 16px;

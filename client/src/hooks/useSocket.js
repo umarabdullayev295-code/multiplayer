@@ -2,104 +2,120 @@ import { useEffect, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { useGame } from '../context/GameContext';
 
-const SOCKET_URL = process.env.REACT_APP_SERVER_URL || 
-  (process.env.NODE_ENV === 'production' ? window.location.origin : 'http://localhost:3001');
+const SOCKET_URL = 'http://localhost:3001';
+
+let socketInstance = null;
 
 export function useSocket() {
   const { state, dispatch, setError } = useGame();
 
   useEffect(() => {
-    const socket = io(SOCKET_URL, {
+    if (socketInstance) return;
+
+    socketInstance = io(SOCKET_URL, {
       transports: ['websocket', 'polling'],
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      timeout: 10000
     });
 
-    dispatch({ type: 'SET_SOCKET', payload: socket });
+    dispatch({ type: 'SET_SOCKET', payload: socketInstance });
 
-    socket.on('connect', () => {
+    socketInstance.on('connect', () => {
+      console.log('Socket ulandi:', socketInstance.id);
       dispatch({ type: 'SET_CONNECTED', payload: true });
     });
 
-    socket.on('disconnect', () => {
+    socketInstance.on('disconnect', () => {
+      console.log('Socket uzildi');
       dispatch({ type: 'SET_CONNECTED', payload: false });
     });
 
-    socket.on('error', ({ message }) => {
+    socketInstance.on('connect_error', (err) => {
+      console.error('Ulanish xatosi:', err.message);
+    });
+
+    socketInstance.on('error', ({ message }) => {
       setError(message);
     });
 
-    socket.on('room_created', ({ roomCode, room }) => {
-      dispatch({ type: 'ROOM_CREATED', payload: { roomCode, room } });
+    socketInstance.on('room_created', ({ roomCode, room, isSolo }) => {
+      dispatch({ type: 'ROOM_CREATED', payload: { roomCode, room, isSolo } });
+      if (isSolo) {
+        setTimeout(() => socketInstance.emit('start_game'), 300);
+      }
     });
 
-    socket.on('room_joined', ({ roomCode, room }) => {
+    socketInstance.on('room_joined', ({ roomCode, room }) => {
       dispatch({ type: 'ROOM_JOINED', payload: { roomCode, room } });
     });
 
-    socket.on('player_joined', ({ room }) => {
+    socketInstance.on('player_joined', ({ room }) => {
       dispatch({ type: 'UPDATE_ROOM', payload: room });
     });
 
-    socket.on('player_left', ({ room }) => {
+    socketInstance.on('player_left', ({ room }) => {
       dispatch({ type: 'UPDATE_ROOM', payload: room });
     });
 
-    socket.on('game_started', ({ room }) => {
+    socketInstance.on('game_started', ({ room }) => {
       dispatch({ type: 'GAME_STARTED', payload: room });
     });
 
-    socket.on('new_question', (question) => {
+    socketInstance.on('new_question', (question) => {
       dispatch({ type: 'NEW_QUESTION', payload: question });
     });
 
-    socket.on('answer_confirmed', (data) => {
+    socketInstance.on('answer_confirmed', (data) => {
       dispatch({ type: 'ANSWER_CONFIRMED', payload: data });
     });
 
-    socket.on('player_answered', (data) => {
+    socketInstance.on('player_answered', (data) => {
       dispatch({ type: 'PLAYER_ANSWERED', payload: data });
     });
 
-    socket.on('show_results', (data) => {
+    socketInstance.on('show_results', (data) => {
       dispatch({ type: 'SHOW_RESULTS', payload: data });
     });
 
-    socket.on('question_timeout', (data) => {
+    socketInstance.on('question_timeout', (data) => {
       dispatch({ type: 'QUESTION_TIMEOUT', payload: data });
     });
 
-    socket.on('game_finished', (data) => {
+    socketInstance.on('game_finished', (data) => {
       dispatch({ type: 'GAME_FINISHED', payload: data });
     });
-
-    return () => {
-      socket.disconnect();
-    };
   }, []);
 
-  const createRoom = useCallback((playerName, settings) => {
-    if (!state.socket) return;
-    dispatch({ type: 'SET_PLAYER_INFO', payload: { name: playerName, id: state.socket.id } });
-    state.socket.emit('create_room', { playerName, settings });
-  }, [state.socket, dispatch]);
+  const createRoom = useCallback((playerName, settings, isSolo = false) => {
+    if (!socketInstance) return;
+    dispatch({ type: 'SET_PLAYER_INFO', payload: { name: playerName, id: socketInstance.id } });
+    socketInstance.emit('create_room', { playerName, settings, isSolo });
+  }, [dispatch]);
 
   const joinRoom = useCallback((roomCode, playerName) => {
-    if (!state.socket) return;
-    dispatch({ type: 'SET_PLAYER_INFO', payload: { name: playerName, id: state.socket.id } });
-    state.socket.emit('join_room', { roomCode, playerName });
-  }, [state.socket, dispatch]);
+    if (!socketInstance) return;
+    dispatch({ type: 'SET_PLAYER_INFO', payload: { name: playerName, id: socketInstance.id } });
+    socketInstance.emit('join_room', { roomCode, playerName });
+  }, [dispatch]);
 
   const startGame = useCallback(() => {
-    if (!state.socket) return;
-    state.socket.emit('start_game');
-  }, [state.socket]);
+    if (!socketInstance) return;
+    socketInstance.emit('start_game');
+  }, []);
 
   const submitAnswer = useCallback((answerIndex) => {
-    if (!state.socket) return;
+    if (!socketInstance) return;
     dispatch({ type: 'ANSWER_SELECTED', payload: answerIndex });
-    state.socket.emit('submit_answer', { answerIndex });
-  }, [state.socket, dispatch]);
+    socketInstance.emit('submit_answer', { answerIndex });
+  }, [dispatch]);
 
-  return { createRoom, joinRoom, startGame, submitAnswer };
+  const disconnectSocket = useCallback(() => {
+    if (socketInstance) {
+      socketInstance.disconnect();
+      socketInstance = null;
+    }
+  }, []);
+
+  return { createRoom, joinRoom, startGame, submitAnswer, disconnectSocket };
 }

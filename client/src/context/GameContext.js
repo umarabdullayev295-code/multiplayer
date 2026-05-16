@@ -9,6 +9,7 @@ const initialState = {
   playerName: null,
   playerId: null,
   isHost: false,
+  isSolo: false,
   room: null,
   currentQuestion: null,
   questionIndex: 0,
@@ -33,12 +34,22 @@ function gameReducer(state, action) {
     case 'SET_CONNECTED':
       return { ...state, isConnected: action.payload };
     case 'ROOM_CREATED':
+      return {
+        ...state,
+        roomCode: action.payload.roomCode,
+        room: action.payload.room,
+        isHost: action.payload.room.hostId === state.playerId,
+        isSolo: action.payload.isSolo || false,
+        screen: action.payload.isSolo ? 'lobby' : 'lobby',
+        error: null
+      };
     case 'ROOM_JOINED':
       return {
         ...state,
         roomCode: action.payload.roomCode,
         room: action.payload.room,
         isHost: action.payload.room.hostId === state.playerId,
+        isSolo: false,
         screen: 'lobby',
         error: null
       };
