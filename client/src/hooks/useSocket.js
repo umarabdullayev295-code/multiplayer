@@ -2,7 +2,9 @@ import { useEffect, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { useGame } from '../context/GameContext';
 
-const SOCKET_URL = 'http://localhost:3001';
+const SOCKET_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://localhost:3001'
+  : window.location.origin;
 
 let socketInstance = null;
 
